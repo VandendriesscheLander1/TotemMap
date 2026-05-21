@@ -79,7 +79,8 @@ button.danger:hover { background: rgba(224,108,117,0.1); }
 .modal-head h2 { margin: 0; font-size: 16px; font-weight: 600; }
 .modal-head .progress { color: var(--muted); font-size: 12px; }
 .modal-top { display: grid; grid-template-columns: 140px 1fr; gap: 14px; align-items: start; margin-bottom: 16px; }
-#thumb { width: 140px; height: 140px; object-fit: cover; border-radius: 8px; background: var(--panel-2); border: 1px solid var(--border); }
+.thumb-wrap { width: 140px; aspect-ratio: 360 / 440; overflow: hidden; position: relative; border-radius: 8px; background: var(--panel-2); border: 1px solid var(--border); }
+#thumb { position: absolute; top: 0; left: -427.7778%; width: 955.5556%; height: 327.2727%; object-fit: fill; max-width: none; display: block; }
 .info { font-size: 12px; color: var(--muted); font-family: ui-monospace, monospace; }
 .info b { color: var(--text); font-weight: 500; }
 .crumbs { font-size: 12px; color: var(--muted); margin-bottom: 8px; }

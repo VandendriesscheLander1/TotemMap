@@ -37,15 +37,6 @@
       <input id="search" placeholder="Search totem name…" />
       <ul id="locations"></ul>
     </div>
-
-    <div class="panel-section">
-      <div class="actions">
-        <button id="exportBtn">Export</button>
-        <button id="importBtn">Import</button>
-        <button id="clearBtn" class="danger">Clear all</button>
-        <input id="importFile" type="file" accept="application/json" hidden />
-      </div>
-    </div>
   </aside>
 </div>
 
@@ -57,7 +48,7 @@
       <div class="progress" id="modalProgress">1 of 1</div>
     </div>
     <div class="modal-top">
-      <img id="thumb" alt="screenshot preview" />
+      <div class="thumb-wrap"><img id="thumb" alt="screenshot preview" /></div>
       <div>
         <div class="crumbs" id="crumbs">Step 1 · <span class="cur">Choose animal</span></div>
         <div class="info">
