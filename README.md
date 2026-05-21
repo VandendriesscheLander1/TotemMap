@@ -1,0 +1,1 @@
+node strip_lua.js newfile.lua temp.lua

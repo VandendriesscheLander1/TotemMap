@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>TotemMap</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div id="app">
+  <div id="mapWrap">
+    <canvas id="mapCanvas"></canvas>
+    <svg id="overlay" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div id="vignette"></div>
+    <div id="status">loading…</div>
+    <div id="hud">—</div>
+  </div>
+
+  <aside id="panel">
+    <div class="panel-section">
+      <div class="brand">Totem<span class="dot">.</span>Map</div>
+      <div class="sub">Drop a Soulframe screenshot, then tag the totem it dropped.</div>
+    </div>
+
+    <div class="panel-section">
+      <label id="drop" for="fileInput">
+        <b>Drop images here</b>
+        <span style="font-size:12px">or click to choose · JPG with embedded coords</span>
+      </label>
+      <input id="fileInput" type="file" accept="image/jpeg" multiple hidden />
+    </div>
+
+    <div class="panel-section" style="flex:1; display:flex; flex-direction:column; min-height:0;">
+      <div class="list-head">
+        <h3>Drops</h3>
+        <span class="count" id="count">0</span>
+      </div>
+      <input id="search" placeholder="Search totem name…" />
+      <ul id="locations"></ul>
+    </div>
+
+    <div class="panel-section">
+      <div class="actions">
+        <button id="exportBtn">Export</button>
+        <button id="importBtn">Import</button>
+        <button id="clearBtn" class="danger">Clear all</button>
+        <input id="importFile" type="file" accept="application/json" hidden />
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- Picker modal -->
+<div id="modalBack">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <h2 id="modalTitle">Pick the totem</h2>
+      <div class="progress" id="modalProgress">1 of 1</div>
+    </div>
+    <div class="modal-top">
+      <img id="thumb" alt="screenshot preview" />
+      <div>
+        <div class="crumbs" id="crumbs">Step 1 · <span class="cur">Choose animal</span></div>
+        <div class="info">
+          <div><b id="modalFile">—</b></div>
+          <div>game x = <span id="modalX">—</span>, z = <span id="modalZ">—</span></div>
+          <div>map  px = <span id="modalPx">—</span>, py = <span id="modalPy">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="stepAnimal" class="animal-grid"></div>
+    <div id="stepTotem" class="totem-scroll" style="display:none"></div>
+
+    <div class="modal-actions">
+      <button id="modalBack2" class="ghost" style="display:none">← Back</button>
+      <button id="modalSkip" class="ghost">Skip</button>
+      <button id="modalCancel" class="ghost">Cancel rest</button>
+    </div>
+    <div class="hint"><kbd>Esc</kbd> skip · <kbd>Shift</kbd>+<kbd>Esc</kbd> cancel rest</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
