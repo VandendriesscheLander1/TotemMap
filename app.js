@@ -334,7 +334,7 @@ async function intake(fileList) {
       if (!m) { skipped.push(f.name); continue; }
       let thumb;
       try {
-        const bmp = await createImageBitmap(f, { resizeWidth: 200, resizeQuality: 'medium' });
+        const bmp = await createImageBitmap(f, { resizeWidth: 1600, resizeQuality: 'high' });
         const c = document.createElement('canvas');
         c.width = bmp.width; c.height = bmp.height;
         c.getContext('2d').drawImage(bmp, 0, 0);
