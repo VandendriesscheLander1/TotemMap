@@ -1,3 +1,4 @@
+const VERSION = 'P14.5';
 const STORAGE_KEY = 'totemmap.locations';
 const RARITY_ORDER = { Rare: 0, Uncommon: 1, Common: 2 };
 const ANIMALS = ['Beaver','Deer','Duck','Rabbit','Rat','Squirrel'];
@@ -36,6 +37,7 @@ function locToRow(l) {
     game_x: l.game[0],
     game_z: l.game[1],
     file: l.file || null,
+    version: VERSION,
   };
 }
 
