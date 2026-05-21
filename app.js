@@ -1,5 +1,6 @@
 const VERSION = 'P14.5';
 const STORAGE_KEY = 'totemmap.locations';
+const FILTER_KEY = 'totemmap.filters';
 const RARITY_ORDER = { Rare: 0, Uncommon: 1, Common: 2 };
 const ANIMALS = ['Beaver','Deer','Duck','Rabbit','Rat','Squirrel'];
 const ANIMAL_IMG = a => `Images/Animals/${a}.png`;
@@ -68,6 +69,7 @@ let locations = loadLocations();
 let activeId = null;
 let searchTerm = '';
 let catalog = {};
+let filters = loadFilters();
 
 init();
 
@@ -90,6 +92,7 @@ async function init() {
   } catch (e) {
     console.error('catalog failed', e);
   }
+  renderFilters();
   loadMapFromUrl('Images/Map/stitched_final.png').catch(() => {
     setStatus('Missing stitched_final.png — drop the map below', true);
   });
@@ -123,6 +126,7 @@ async function loadFromCloud() {
     const { data, error } = await sb.from(TABLE).select('*').order('added_at', { ascending: true });
     if (error) throw error;
     locations = (data || []).map(rowToLoc);
+    renderFilters();
     renderList();
     redrawOverlay();
   } catch (e) {
@@ -518,6 +522,7 @@ function persist() {
 }
 async function addLocation(loc) {
   locations.push(loc);
+  renderFilters();
   renderList();
   redrawOverlay(loc.id);
   if (CLOUD_ENABLED) {
@@ -548,10 +553,13 @@ searchEl.addEventListener('input', () => { searchTerm = searchEl.value.toLowerCa
 function locLabel(l) { return l.displayName || l.title || l.file || 'Unnamed'; }
 
 function renderList() {
-  countEl.textContent = locations.length;
+  const visible = locations.filter(isVisible);
+  countEl.textContent = visible.length === locations.length
+    ? locations.length
+    : `${visible.length} / ${locations.length}`;
   const filtered = searchTerm
-    ? locations.filter(l => locLabel(l).toLowerCase().includes(searchTerm) || (l.animal || '').toLowerCase().includes(searchTerm))
-    : locations;
+    ? visible.filter(l => locLabel(l).toLowerCase().includes(searchTerm) || (l.animal || '').toLowerCase().includes(searchTerm))
+    : visible;
   locationsEl.innerHTML = '';
   for (const l of filtered) {
     const li = document.createElement('li');
@@ -595,8 +603,10 @@ function focusLocation(id) {
 
 function redrawOverlay(enterId) {
   if (!transform) return;
+  const showLabels = filters.showLabels;
   let svg = '';
   for (const l of locations) {
+    if (!isVisible(l)) continue;
     const [px, py] = applyT(transform, l.game[0], l.game[1]);
     const active = l.id === activeId;
     const enter = l.id === enterId ? ' enter' : '';
@@ -604,20 +614,21 @@ function redrawOverlay(enterId) {
     const animal = l.animal;
     const stroke = active ? '#ffd591' : '#f0b86e';
     const labelY = py - (DOT_RADIUS + 4);
+    const labelSvg = showLabels
+      ? `<text data-scale="${DOT_TEXT}" x="${px}" y="${animal ? labelY : py - 10}" text-anchor="middle"
+          font-family="ui-sans-serif, system-ui, sans-serif" font-weight="600"
+          fill="${stroke}" stroke="#0a0a0a" stroke-width="2" paint-order="stroke" font-size="${DOT_TEXT}">${escapeHtml(label)}</text>`
+      : '';
     if (animal) {
       svg += `<g class="loc${enter}" data-id="${l.id}">
         <circle cx="${px}" cy="${py}" data-scale="${DOT_RADIUS}" r="${DOT_RADIUS}" fill="rgba(14,17,22,0.92)" stroke="${stroke}" stroke-width="1.5"/>
         <image data-scale="${DOT_IMG}" data-cx="${px}" data-cy="${py}" href="${ANIMAL_IMG(animal)}" width="${DOT_IMG}" height="${DOT_IMG}" x="${px - DOT_IMG/2}" y="${py - DOT_IMG/2}" preserveAspectRatio="xMidYMid meet"/>
-        <text data-scale="${DOT_TEXT}" x="${px}" y="${labelY}" text-anchor="middle"
-          font-family="ui-sans-serif, system-ui, sans-serif" font-weight="600"
-          fill="${stroke}" stroke="#0a0a0a" stroke-width="2" paint-order="stroke" font-size="${DOT_TEXT}">${escapeHtml(label)}</text>
+        ${labelSvg}
       </g>`;
     } else {
       svg += `<g class="loc${enter}" data-id="${l.id}">
         <circle data-scale="6" cx="${px}" cy="${py}" r="6" fill="${stroke}" stroke="#1a1208" stroke-width="1.5"/>
-        <text data-scale="${DOT_TEXT}" x="${px}" y="${py - 10}" text-anchor="middle"
-          font-family="ui-sans-serif, system-ui, sans-serif" font-weight="600"
-          fill="${stroke}" stroke="#0a0a0a" stroke-width="2" paint-order="stroke" font-size="${DOT_TEXT}">${escapeHtml(label)}</text>
+        ${labelSvg}
       </g>`;
     }
   }
@@ -630,15 +641,15 @@ function redrawOverlay(enterId) {
   }
 }
 
-document.getElementById('exportBtn').addEventListener('click', () => {
+document.getElementById('exportBtn')?.addEventListener('click', () => {
   const blob = new Blob([JSON.stringify({ version: 2, exportedAt: new Date().toISOString(), locations }, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'locations.json';
   a.click();
 });
-document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
-document.getElementById('importFile').addEventListener('change', async e => {
+document.getElementById('importBtn')?.addEventListener('click', () => document.getElementById('importFile').click());
+document.getElementById('importFile')?.addEventListener('change', async e => {
   const f = e.target.files[0]; if (!f) return;
   const data = JSON.parse(await f.text());
   const incoming = Array.isArray(data) ? data : (data.locations || []);
@@ -676,7 +687,7 @@ document.getElementById('importFile').addEventListener('change', async e => {
   }
   e.target.value = '';
 });
-document.getElementById('clearBtn').addEventListener('click', async () => {
+document.getElementById('clearBtn')?.addEventListener('click', async () => {
   if (!locations.length) return;
   const warn = CLOUD_ENABLED
     ? `Delete all ${locations.length} location(s) from the SHARED cloud database? Everyone will lose them.`
@@ -692,6 +703,112 @@ document.getElementById('clearBtn').addEventListener('click', async () => {
   } else {
     persist();
   }
+});
+
+// ----- Filters -----
+function loadFilters() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(FILTER_KEY) || '{}');
+    return {
+      animals: new Set(raw.animals || []),
+      rarities: new Set(raw.rarities || []),
+      weapons: new Set(raw.weapons || []),
+      showLabels: raw.showLabels !== false,
+    };
+  } catch {
+    return { animals: new Set(), rarities: new Set(), weapons: new Set(), showLabels: true };
+  }
+}
+function persistFilters() {
+  localStorage.setItem(FILTER_KEY, JSON.stringify({
+    animals: [...filters.animals],
+    rarities: [...filters.rarities],
+    weapons: [...filters.weapons],
+    showLabels: filters.showLabels,
+  }));
+}
+function isVisible(l) {
+  if (l.animal && filters.animals.has(l.animal)) return false;
+  if (l.rarity && filters.rarities.has(l.rarity)) return false;
+  if (l.weaponType && filters.weapons.has(l.weaponType)) return false;
+  return true;
+}
+function collectWeapons() {
+  const set = new Set();
+  for (const a of Object.keys(catalog)) for (const t of catalog[a]) if (t.weaponType) set.add(t.weaponType);
+  for (const l of locations) if (l.weaponType) set.add(l.weaponType);
+  return [...set].sort();
+}
+function onFilterChange() {
+  persistFilters();
+  renderFilters();
+  renderList();
+  redrawOverlay();
+}
+function renderFilters() {
+  const an = document.getElementById('filterAnimals');
+  if (!an) return;
+  an.innerHTML = '';
+  for (const a of ANIMALS) {
+    const on = !filters.animals.has(a);
+    const chip = document.createElement('div');
+    chip.className = `chip ${on ? 'on' : 'off'}`;
+    chip.innerHTML = `<img src="${ANIMAL_IMG(a)}" alt="" />${a}`;
+    chip.title = on ? `Hide ${a}` : `Show ${a}`;
+    chip.addEventListener('click', () => {
+      if (on) filters.animals.add(a); else filters.animals.delete(a);
+      onFilterChange();
+    });
+    an.appendChild(chip);
+  }
+  const rEl = document.getElementById('filterRarities');
+  rEl.innerHTML = '';
+  for (const rar of ['Rare','Uncommon','Common']) {
+    const on = !filters.rarities.has(rar);
+    const chip = document.createElement('div');
+    chip.className = `chip rarity-${rar} ${on ? 'on' : 'off'}`;
+    chip.textContent = rar;
+    chip.addEventListener('click', () => {
+      if (on) filters.rarities.add(rar); else filters.rarities.delete(rar);
+      onFilterChange();
+    });
+    rEl.appendChild(chip);
+  }
+  const wEl = document.getElementById('filterWeapons');
+  wEl.innerHTML = '';
+  const weapons = collectWeapons();
+  if (!weapons.length) {
+    wEl.innerHTML = '<span class="filter-empty">—</span>';
+  } else {
+    for (const wt of weapons) {
+      const on = !filters.weapons.has(wt);
+      const chip = document.createElement('div');
+      chip.className = `chip ${on ? 'on' : 'off'}`;
+      chip.textContent = wt;
+      chip.addEventListener('click', () => {
+        if (on) filters.weapons.add(wt); else filters.weapons.delete(wt);
+        onFilterChange();
+      });
+      wEl.appendChild(chip);
+    }
+  }
+  const lbl = document.getElementById('filterLabels');
+  if (lbl) lbl.checked = filters.showLabels;
+  const total = filters.animals.size + filters.rarities.size + filters.weapons.size;
+  const badge = document.getElementById('filterCount');
+  if (badge) {
+    if (total > 0) { badge.style.display = ''; badge.textContent = `${total} hidden`; }
+    else badge.style.display = 'none';
+  }
+}
+document.getElementById('filterReset')?.addEventListener('click', () => {
+  filters = { animals: new Set(), rarities: new Set(), weapons: new Set(), showLabels: true };
+  onFilterChange();
+});
+document.getElementById('filterLabels')?.addEventListener('change', e => {
+  filters.showLabels = e.target.checked;
+  persistFilters();
+  redrawOverlay();
 });
 
 window.addEventListener('resize', applyView);

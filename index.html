@@ -29,9 +29,29 @@
       <input id="fileInput" type="file" accept="image/jpeg" multiple hidden />
     </div>
 
+    <div class="panel-section" id="filterSection">
+      <div class="list-head">
+        <h3>Filters <span class="count" id="filterCount" style="display:none">0 hidden</span></h3>
+        <button id="filterReset" class="ghost" style="font-size:10px;padding:2px 8px">Reset</button>
+      </div>
+      <div class="filter-row">
+        <div class="filter-label">Animals</div>
+        <div class="filter-chips" id="filterAnimals"></div>
+      </div>
+      <div class="filter-row">
+        <div class="filter-label">Rarity</div>
+        <div class="filter-chips" id="filterRarities"></div>
+      </div>
+      <div class="filter-row" id="filterWeaponsRow">
+        <div class="filter-label">Weapons</div>
+        <div class="filter-chips" id="filterWeapons"></div>
+      </div>
+      <label class="filter-toggle"><input type="checkbox" id="filterLabels" checked /> Show labels on map</label>
+    </div>
+
     <div class="panel-section" style="flex:1; display:flex; flex-direction:column; min-height:0;">
       <div class="list-head">
-        <h3>Drops</h3>
+        <h3>Totems</h3>
         <span class="count" id="count">0</span>
       </div>
       <input id="search" placeholder="Search totem name…" />

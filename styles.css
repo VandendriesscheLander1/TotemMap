@@ -115,6 +115,23 @@ button.danger:hover { background: rgba(224,108,117,0.1); }
 .hint { font-size: 11px; color: var(--muted); margin-top: 10px; }
 kbd { background: var(--panel-2); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; font-size: 10px; font-family: ui-monospace, monospace; }
 
+/* Filters */
+#filterSection { padding-top: 12px; padding-bottom: 12px; }
+.filter-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+.filter-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); width: 56px; padding-top: 4px; flex-shrink: 0; font-weight: 600; }
+.filter-chips { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; min-width: 0; }
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; font-size: 11px; border: 1px solid var(--border); border-radius: 999px; background: var(--panel-2); cursor: pointer; color: var(--text); user-select: none; transition: opacity 100ms, border-color 100ms, background 100ms; }
+.chip img { width: 16px; height: 16px; object-fit: contain; }
+.chip.off { opacity: 0.32; background: transparent; }
+.chip.on:hover { border-color: var(--accent); }
+.chip.rarity-Common.on  { border-color: var(--common);   color: var(--common); }
+.chip.rarity-Uncommon.on { border-color: var(--uncommon); color: var(--uncommon); }
+.chip.rarity-Rare.on    { border-color: var(--rare);     color: var(--rare); }
+.filter-empty { font-size: 11px; color: var(--muted); padding: 4px 0; }
+.filter-toggle { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); cursor: pointer; margin-top: 4px; user-select: none; }
+.filter-toggle input { accent-color: var(--accent); margin: 0; }
+#filterCount { margin-left: 6px; text-transform: none; letter-spacing: 0; color: var(--accent); background: rgba(240,184,110,0.12); }
+
 /* Overlay dot fade-in */
 #overlay .loc { transition: opacity 240ms; }
 #overlay .loc.enter { opacity: 0; }
