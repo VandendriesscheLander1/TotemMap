@@ -401,7 +401,7 @@ async function makeThumb(file) {
 // Thumbnails show the in-game totem card with the name printed on the bottom
 // strip ("THE REBOUND / Weapon Totem"). We OCR that strip, fuzzy-match against
 // the catalog, and surface a one-tap confirm — saving two clicks per shot.
-const OCR_CONFIDENT_SCORE = 0.32;
+const OCR_CONFIDENT_SCORE = 0.18;
 let _ocrWorkerPromise = null;
 let _fusePromise = null;
 let _fuse = null;
@@ -461,16 +461,32 @@ async function prepareForOCR(srcUrl) {
     i.onload = () => res(i); i.onerror = rej;
     i.src = srcUrl;
   });
-  // Downscale to 900px wide — fast enough for Tesseract, big enough to read.
-  const targetW = 900;
+  // 1600px keeps card text ~15px tall — minimum Tesseract needs for accuracy.
+  const targetW = 1600;
   const scale = Math.min(1, targetW / img.width);
   const c = document.createElement('canvas');
   c.width = Math.round(img.width * scale);
   c.height = Math.round(img.height * scale);
   const ctx = c.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, c.width, c.height);
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(img, 0, 0, c.width, c.height);
+  // Color-filter: keep warm/golden pixels (totem card name color) and bright
+  // near-white pixels (subtitle/HUD text) as black ink; everything else white.
+  // This eliminates scene noise (foliage, rocks, sky) that PSM 11 would
+  // otherwise mis-read as letters.
+  const imgd = ctx.getImageData(0, 0, c.width, c.height);
+  const d = imgd.data;
+  for (let j = 0; j < d.length; j += 4) {
+    const r = d[j], g = d[j + 1], b = d[j + 2];
+    const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+    const isGolden = lum > 130 && r > 150 && r > b + 30 && g > b;
+    const isLight  = lum > 190 && r > 175 && g > 175 && b > 140;
+    d[j] = d[j + 1] = d[j + 2] = (isGolden || isLight) ? 0 : 255;
+  }
+  ctx.putImageData(imgd, 0, 0);
   return c;
 }
 
@@ -480,13 +496,15 @@ function matchTotemName(rawText) {
   let best = null;
   for (const line of lines) {
     if (/weapon\s*totem/i.test(line)) continue;
-    // Strip non-alpha (digits from perf stats, punctuation, etc.)
+    // Skip HUD/perf-stat lines that would never be a totem name.
+    if (/\b(fps|vram|ram|gpu|cpu|frame\s*rate)\b/i.test(line)) continue;
     const query = line.replace(/[^A-Za-z\s'-]/g, ' ').replace(/\s+/g, ' ').trim();
     if (query.length < 3) continue;
     const stripped = query.replace(/^the\s+/i, '').trim();
     if (stripped.length < 3) continue;
     const r = _fuse.search(stripped)[0];
-    if (r && (!best || r.score < best.score)) {
+    // Only accept matches within a tight score window to avoid false positives.
+    if (r && r.score < 0.4 && (!best || r.score < best.score)) {
       best = { ...r.item, score: r.score, query };
     }
   }
