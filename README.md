@@ -71,7 +71,7 @@ python -m http.server
 4. The pin appears on the map and the entry is added to the sidebar list
 5. Click a list entry to fly the map to that pin
 6. Use the filter chips to hide animals, rarities, or weapon types you're not interested in
-
+ 
 **Keyboard shortcuts in the picker modal:**
 
 | Key | Action |
