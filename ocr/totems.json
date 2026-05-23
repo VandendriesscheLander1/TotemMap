@@ -1,0 +1,738 @@
+[
+  {
+    "id": "beaver_bow_gnawing",
+    "animal": "Beaver",
+    "weaponType": "Bow",
+    "displayName": "The Gnawing",
+    "description": "Endlessly persistent",
+    "rarity": "Common"
+  },
+  {
+    "id": "beaver_bow_sentinel",
+    "animal": "Beaver",
+    "weaponType": "Bow",
+    "displayName": "The Sentinel",
+    "description": "A worthy guardian",
+    "rarity": "Common"
+  },
+  {
+    "id": "beaver_flyblade_tireless",
+    "animal": "Beaver",
+    "weaponType": "Flyblade",
+    "displayName": "The Tireless",
+    "description": "One who does not give in",
+    "rarity": "Common"
+  },
+  {
+    "id": "beaver_flyblade_thumper",
+    "animal": "Beaver",
+    "weaponType": "Flyblade",
+    "displayName": "The Thumper",
+    "description": "Flat of tail",
+    "rarity": "Common"
+  },
+  {
+    "id": "beaver_heavy_logger",
+    "animal": "Beaver",
+    "weaponType": "Heavy",
+    "displayName": "The Logger",
+    "description": "A feller of mighty trees",
+    "rarity": "Common"
+  },
+  {
+    "id": "beaver_heavy_bulwark",
+    "animal": "Beaver",
+    "weaponType": "Heavy",
+    "displayName": "The Bulwark",
+    "description": "A steadfast force",
+    "rarity": "Rare"
+  },
+  {
+    "id": "beaver_longblade_resolute",
+    "animal": "Beaver",
+    "weaponType": "Long Blade",
+    "displayName": "The Resolute",
+    "description": "A determined fellow",
+    "rarity": "Rare"
+  },
+  {
+    "id": "beaver_longblade_hewen",
+    "animal": "Beaver",
+    "weaponType": "Long Blade",
+    "displayName": "The Hewen",
+    "description": "Knower of the fallen",
+    "rarity": "Common"
+  },
+  {
+    "id": "beaver_magick_creator",
+    "animal": "Beaver",
+    "weaponType": "Magick",
+    "displayName": "The Creator",
+    "description": "A maker of worlds",
+    "rarity": "Uncommon"
+  },
+  {
+    "id": "beaver_magick_shaper",
+    "animal": "Beaver",
+    "weaponType": "Magick",
+    "displayName": "The Shaper",
+    "description": "Crafter of meaning",
+    "rarity": "Uncommon"
+  },
+  {
+    "id": "beaver_polearm_toiling",
+    "animal": "Beaver",
+    "weaponType": "Polearm",
+    "displayName": "The Toiling",
+    "description": "Hardest of workers",
+    "rarity": "Common"
+  },
+  {
+    "id": "beaver_polearm_carver",
+    "animal": "Beaver",
+    "weaponType": "Polearm",
+    "displayName": "The Carver",
+    "description": "Maker of perfect forms",
+    "rarity": "Rare"
+  },
+  {
+    "id": "beaver_shield_ally",
+    "animal": "Beaver",
+    "weaponType": "Shield",
+    "displayName": "The Ally",
+    "description": "To be trusted",
+    "rarity": "Common"
+  },
+  {
+    "id": "beaver_shield_mason",
+    "animal": "Beaver",
+    "weaponType": "Shield",
+    "displayName": "The Mason",
+    "description": "Architect of defence",
+    "rarity": "Uncommon"
+  },
+  {
+    "id": "beaver_shortblade_master",
+    "animal": "Beaver",
+    "weaponType": "Short Blade",
+    "displayName": "The Master",
+    "description": "Capable and determined",
+    "rarity": "Common"
+  },
+  {
+    "id": "beaver_shortblade_chipper",
+    "animal": "Beaver",
+    "weaponType": "Short Blade",
+    "displayName": "The Chipper",
+    "description": "Slow and steady",
+    "rarity": "Common"
+  },
+  {
+    "id": "deer_bow_noble",
+    "animal": "Deer",
+    "weaponType": "Bow",
+    "displayName": "The Noble",
+    "description": "Having the purest intentions",
+    "rarity": "Rare"
+  },
+  {
+    "id": "deer_flyblade_regal",
+    "animal": "Deer",
+    "weaponType": "Flyblade",
+    "displayName": "The Regal",
+    "description": "Commander of the herd",
+    "rarity": "Uncommon"
+  },
+  {
+    "id": "deer_flyblade_pronged",
+    "animal": "Deer",
+    "weaponType": "Flyblade",
+    "displayName": "The Pronged",
+    "description": "A multifaceted creature",
+    "rarity": "Common"
+  },
+  {
+    "id": "deer_heavy_highborn",
+    "animal": "Deer",
+    "weaponType": "Heavy",
+    "displayName": "The Highborn",
+    "description": "Of noble blood",
+    "rarity": "Uncommon"
+  },
+  {
+    "id": "deer_heavy_warden",
+    "animal": "Deer",
+    "weaponType": "Heavy",
+    "displayName": "The Warden",
+    "description": "A steadfast force",
+    "rarity": "Common"
+  },
+  {
+    "id": "deer_longblade_marked",
+    "animal": "Deer",
+    "weaponType": "Long Blade",
+    "displayName": "The Marked",
+    "description": "The chosen leader",
+    "rarity": "Common"
+  },
+  {
+    "id": "deer_longblade_graceful",
+    "animal": "Deer",
+    "weaponType": "Long Blade",
+    "displayName": "The Graceful",
+    "description": "Moves effortlessly",
+    "rarity": "Common"
+  },
+  {
+    "id": "deer_magick_proud",
+    "animal": "Deer",
+    "weaponType": "Magick",
+    "displayName": "The Proud",
+    "description": "Unwavering confidence",
+    "rarity": "Common"
+  },
+  {
+    "id": "deer_magick_fleet",
+    "animal": "Deer",
+    "weaponType": "Magick",
+    "displayName": "The Fleet",
+    "description": "One of many",
+    "rarity": "Common"
+  },
+  {
+    "id": "deer_polearm_headlong",
+    "animal": "Deer",
+    "weaponType": "Polearm",
+    "displayName": "The Headlong",
+    "description": "Leader of the charge",
+    "rarity": "Rare"
+  },
+  {
+    "id": "deer_polearm_astute",
+    "animal": "Deer",
+    "weaponType": "Polearm",
+    "displayName": "The Astute",
+    "description": "Overseer of all",
+    "rarity": "Common"
+  },
+  {
+    "id": "deer_shield_protector",
+    "animal": "Deer",
+    "weaponType": "Shield",
+    "displayName": "The Protector",
+    "description": "Ward of the herd",
+    "rarity": "Common"
+  },
+  {
+    "id": "deer_shield_contender",
+    "animal": "Deer",
+    "weaponType": "Shield",
+    "displayName": "The Contender",
+    "description": "Challenger of rivals",
+    "rarity": "Common"
+  },
+  {
+    "id": "deer_shortblade_cleft",
+    "animal": "Deer",
+    "weaponType": "Short Blade",
+    "displayName": "The Cleft",
+    "description": "An attention divided",
+    "rarity": "Common"
+  },
+  {
+    "id": "deer_shortblade_swift",
+    "animal": "Deer",
+    "weaponType": "Short Blade",
+    "displayName": "The Swift",
+    "description": "Effortless and unwavering",
+    "rarity": "Common"
+  },
+  {
+    "id": "duck_bow_yielding",
+    "animal": "Duck",
+    "weaponType": "Bow",
+    "displayName": "The Yielding",
+    "description": "Fluid as water",
+    "rarity": "Common"
+  },
+  {
+    "id": "duck_bow_voyager",
+    "animal": "Duck",
+    "weaponType": "Bow",
+    "displayName": "The Voyager",
+    "description": "Explorer of unknowns",
+    "rarity": "Rare"
+  },
+  {
+    "id": "duck_flyblade_ambling",
+    "animal": "Duck",
+    "weaponType": "Flyblade",
+    "displayName": "The Ambling",
+    "description": "A taker of time",
+    "rarity": "Common"
+  },
+  {
+    "id": "duck_flyblade_flurry",
+    "animal": "Duck",
+    "weaponType": "Flyblade",
+    "displayName": "The Flurry",
+    "description": "A whirl of wind and water",
+    "rarity": "Common"
+  },
+  {
+    "id": "duck_heavy_sodden",
+    "animal": "Duck",
+    "weaponType": "Heavy",
+    "displayName": "The Sodden",
+    "description": "A fair swimmer",
+    "rarity": "Uncommon"
+  },
+  {
+    "id": "duck_heavy_ripple",
+    "animal": "Duck",
+    "weaponType": "Heavy",
+    "displayName": "The Ripple",
+    "description": "Maker of waves",
+    "rarity": "Common"
+  },
+  {
+    "id": "duck_longblade_plunged",
+    "animal": "Duck",
+    "weaponType": "Long Blade",
+    "displayName": "The Plunged",
+    "description": "A natural diver",
+    "rarity": "Uncommon"
+  },
+  {
+    "id": "duck_longblade_splasher",
+    "animal": "Duck",
+    "weaponType": "Long Blade",
+    "displayName": "The Splasher",
+    "description": "Render of waters",
+    "rarity": "Common"
+  },
+  {
+    "id": "duck_magick_buoyant",
+    "animal": "Duck",
+    "weaponType": "Magick",
+    "displayName": "The Buoyant",
+    "description": "Floats over rough waters",
+    "rarity": "Rare"
+  },
+  {
+    "id": "duck_magick_current",
+    "animal": "Duck",
+    "weaponType": "Magick",
+    "displayName": "The Current",
+    "description": "Guides the great flow",
+    "rarity": "Common"
+  },
+  {
+    "id": "duck_polearm_drudger",
+    "animal": "Duck",
+    "weaponType": "Polearm",
+    "displayName": "The Drudger",
+    "description": "Fearless in the face of muck",
+    "rarity": "Common"
+  },
+  {
+    "id": "duck_polearm_waddler",
+    "animal": "Duck",
+    "weaponType": "Polearm",
+    "displayName": "The Waddler",
+    "description": "Wobbly yet effective",
+    "rarity": "Common"
+  },
+  {
+    "id": "duck_shield_sailor",
+    "animal": "Duck",
+    "weaponType": "Shield",
+    "displayName": "The Sailor",
+    "description": "Expert of the waters",
+    "rarity": "Common"
+  },
+  {
+    "id": "duck_shield_anchor",
+    "animal": "Duck",
+    "weaponType": "Shield",
+    "displayName": "The Anchor",
+    "description": "Resting in troubled waters",
+    "rarity": "Uncommon"
+  },
+  {
+    "id": "duck_shortblade_wader",
+    "animal": "Duck",
+    "weaponType": "Short Blade",
+    "displayName": "The Wader",
+    "description": "Lover of shallow waters",
+    "rarity": "Common"
+  },
+  {
+    "id": "duck_shortblade_sloshing",
+    "animal": "Duck",
+    "weaponType": "Short Blade",
+    "displayName": "The Sloshing",
+    "description": "A disorienting tempest",
+    "rarity": "Uncommon"
+  },
+  {
+    "id": "rabbit_bow_ample",
+    "animal": "Rabbit",
+    "weaponType": "Bow",
+    "displayName": "The Ample",
+    "description": "Satisfied with things as they are",
+    "rarity": "Common"
+  },
+  {
+    "id": "rabbit_flyblade_rallying",
+    "animal": "Rabbit",
+    "weaponType": "Flyblade",
+    "displayName": "The Rallying",
+    "description": "A symbol of resilience",
+    "rarity": "Common"
+  },
+  {
+    "id": "rabbit_heavy_compelled",
+    "animal": "Rabbit",
+    "weaponType": "Heavy",
+    "displayName": "The Compelled",
+    "description": "Drawn by larger force",
+    "rarity": "Rare"
+  },
+  {
+    "id": "rabbit_heavy_stomping",
+    "animal": "Rabbit",
+    "weaponType": "Heavy",
+    "displayName": "The Stomping",
+    "description": "Shaker of soil",
+    "rarity": "Common"
+  },
+  {
+    "id": "rabbit_longblade_brawn",
+    "animal": "Rabbit",
+    "weaponType": "Long Blade",
+    "displayName": "The Brawn",
+    "description": "Well-muscled",
+    "rarity": "Rare"
+  },
+  {
+    "id": "rabbit_longblade_bounder",
+    "animal": "Rabbit",
+    "weaponType": "Long Blade",
+    "displayName": "The Bounder",
+    "description": "Taker of leaps",
+    "rarity": "Common"
+  },
+  {
+    "id": "rabbit_magick_springing",
+    "animal": "Rabbit",
+    "weaponType": "Magick",
+    "displayName": "The Springing",
+    "description": "Coiled and ready",
+    "rarity": "Common"
+  },
+  {
+    "id": "rabbit_polearm_rebound",
+    "animal": "Rabbit",
+    "weaponType": "Polearm",
+    "displayName": "The Rebound",
+    "description": "A symbol of health and luck",
+    "rarity": "Uncommon"
+  },
+  {
+    "id": "rabbit_polearm_bombardier",
+    "animal": "Rabbit",
+    "weaponType": "Polearm",
+    "displayName": "The Bombardier",
+    "description": "A thumper of feet",
+    "rarity": "Common"
+  },
+  {
+    "id": "rabbit_shield_sturdy",
+    "animal": "Rabbit",
+    "weaponType": "Shield",
+    "displayName": "The Sturdy",
+    "description": "Solid and secure",
+    "rarity": "Common"
+  },
+  {
+    "id": "rabbit_shield_targe",
+    "animal": "Rabbit",
+    "weaponType": "Shield",
+    "displayName": "The Targe",
+    "description": "Deflector of assaults",
+    "rarity": "Common"
+  },
+  {
+    "id": "rabbit_shortblade_punter",
+    "animal": "Rabbit",
+    "weaponType": "Short Blade",
+    "displayName": "The Punter",
+    "description": "A mighty kicker",
+    "rarity": "Common"
+  },
+  {
+    "id": "rabbit_shortblade_bolt",
+    "animal": "Rabbit",
+    "weaponType": "Short Blade",
+    "displayName": "The Bolt",
+    "description": "A rapid burst forth",
+    "rarity": "Uncommon"
+  },
+  {
+    "id": "rat_bow_scourge",
+    "animal": "Rat",
+    "weaponType": "Bow",
+    "displayName": "The Scourge",
+    "description": "Bringer of blight",
+    "rarity": "Common"
+  },
+  {
+    "id": "rat_bow_slinker",
+    "animal": "Rat",
+    "weaponType": "Bow",
+    "displayName": "The Slinker",
+    "description": "A cunning stalker",
+    "rarity": "Common"
+  },
+  {
+    "id": "rat_flyblade_clever",
+    "animal": "Rat",
+    "weaponType": "Flyblade",
+    "displayName": "The Clever",
+    "description": "A cunning creature",
+    "rarity": "Uncommon"
+  },
+  {
+    "id": "rat_flyblade_skitter",
+    "animal": "Rat",
+    "weaponType": "Flyblade",
+    "displayName": "The Skitter",
+    "description": "A blur of sudden movement",
+    "rarity": "Common"
+  },
+  {
+    "id": "rat_heavy_thief",
+    "animal": "Rat",
+    "weaponType": "Heavy",
+    "displayName": "The Thief",
+    "description": "Takes what is wanted",
+    "rarity": "Common"
+  },
+  {
+    "id": "rat_heavy_usurper",
+    "animal": "Rat",
+    "weaponType": "Heavy",
+    "displayName": "The Usurper",
+    "description": "A seizer of power",
+    "rarity": "Uncommon"
+  },
+  {
+    "id": "rat_longblade_rascal",
+    "animal": "Rat",
+    "weaponType": "Long Blade",
+    "displayName": "The Rascal",
+    "description": "Roguishly endearing",
+    "rarity": "Rare"
+  },
+  {
+    "id": "rat_longblade_shadow",
+    "animal": "Rat",
+    "weaponType": "Long Blade",
+    "displayName": "The Shadow",
+    "description": "A presence unseen",
+    "rarity": "Uncommon"
+  },
+  {
+    "id": "rat_magick_blighted",
+    "animal": "Rat",
+    "weaponType": "Magick",
+    "displayName": "The Blighted",
+    "description": "Knower of the wastes",
+    "rarity": "Common"
+  },
+  {
+    "id": "rat_magick_forager",
+    "animal": "Rat",
+    "weaponType": "Magick",
+    "displayName": "The Forager",
+    "description": "Knower of the wastes",
+    "rarity": "Common"
+  },
+  {
+    "id": "rat_polearm_sly",
+    "animal": "Rat",
+    "weaponType": "Polearm",
+    "displayName": "The Sly",
+    "description": "Self-satisfied",
+    "rarity": "Uncommon"
+  },
+  {
+    "id": "rat_polearm_biting",
+    "animal": "Rat",
+    "weaponType": "Polearm",
+    "displayName": "The Biting",
+    "description": "A toothy thing",
+    "rarity": "Common"
+  },
+  {
+    "id": "rat_shield_lurker",
+    "animal": "Rat",
+    "weaponType": "Shield",
+    "displayName": "The Lurker",
+    "description": "A watcher and waiter",
+    "rarity": "Common"
+  },
+  {
+    "id": "rat_shield_tunneler",
+    "animal": "Rat",
+    "weaponType": "Shield",
+    "displayName": "The Tunneler",
+    "description": "Carver of secrets",
+    "rarity": "Rare"
+  },
+  {
+    "id": "rat_shortblade_scavenger",
+    "animal": "Rat",
+    "weaponType": "Short Blade",
+    "displayName": "The Scavenger",
+    "description": "A seeker of opportunities",
+    "rarity": "Common"
+  },
+  {
+    "id": "rat_shortblade_nibbling",
+    "animal": "Rat",
+    "weaponType": "Short Blade",
+    "displayName": "The Nibbling",
+    "description": "Persistent and nagging",
+    "rarity": "Common"
+  },
+  {
+    "id": "squirrel_bow_spry",
+    "animal": "Squirrel",
+    "weaponType": "Bow",
+    "displayName": "The Spry",
+    "description": "Willing and able",
+    "rarity": "Uncommon"
+  },
+  {
+    "id": "squirrel_bow_lookout",
+    "animal": "Squirrel",
+    "weaponType": "Bow",
+    "displayName": "The Lookout",
+    "description": "A sharp gaze from above",
+    "rarity": "Common"
+  },
+  {
+    "id": "squirrel_flyblade_messenger",
+    "animal": "Squirrel",
+    "weaponType": "Flyblade",
+    "displayName": "The Messenger",
+    "description": "Breaker of news",
+    "rarity": "Common"
+  },
+  {
+    "id": "squirrel_flyblade_climber",
+    "animal": "Squirrel",
+    "weaponType": "Flyblade",
+    "displayName": "The Climber",
+    "description": "Finding purchase above",
+    "rarity": "Rare"
+  },
+  {
+    "id": "squirrel_heavy_mercurial",
+    "animal": "Squirrel",
+    "weaponType": "Heavy",
+    "displayName": "The Mercurial",
+    "description": "The one between all others",
+    "rarity": "Common"
+  },
+  {
+    "id": "squirrel_heavy_fluffy",
+    "animal": "Squirrel",
+    "weaponType": "Heavy",
+    "displayName": "The Fluffy",
+    "description": "A great puff of fur",
+    "rarity": "Uncommon"
+  },
+  {
+    "id": "squirrel_longblade_lithe",
+    "animal": "Squirrel",
+    "weaponType": "Long Blade",
+    "displayName": "The Lithe",
+    "description": "Swift and slender",
+    "rarity": "Common"
+  },
+  {
+    "id": "squirrel_longblade_glider",
+    "animal": "Squirrel",
+    "weaponType": "Long Blade",
+    "displayName": "The Glider",
+    "description": "Soaring through trees",
+    "rarity": "Uncommon"
+  },
+  {
+    "id": "squirrel_magick_spirited",
+    "animal": "Squirrel",
+    "weaponType": "Magick",
+    "displayName": "The Spirited",
+    "description": "Full of life",
+    "rarity": "Rare"
+  },
+  {
+    "id": "squirrel_magick_dart",
+    "animal": "Squirrel",
+    "weaponType": "Magick",
+    "displayName": "The Dart",
+    "description": "Sudden unerring speed",
+    "rarity": "Common"
+  },
+  {
+    "id": "squirrel_polearm_nimble",
+    "animal": "Squirrel",
+    "weaponType": "Polearm",
+    "displayName": "The Nimble",
+    "description": "Quick and agile",
+    "rarity": "Common"
+  },
+  {
+    "id": "squirrel_polearm_lively",
+    "animal": "Squirrel",
+    "weaponType": "Polearm",
+    "displayName": "The Lively",
+    "description": "Of boundless energy",
+    "rarity": "Common"
+  },
+  {
+    "id": "squirrel_shield_impish",
+    "animal": "Squirrel",
+    "weaponType": "Shield",
+    "displayName": "The Impish",
+    "description": "Just a scurry away",
+    "rarity": "Common"
+  },
+  {
+    "id": "squirrel_shield_stasher",
+    "animal": "Squirrel",
+    "weaponType": "Shield",
+    "displayName": "The Stasher",
+    "description": "A collector of things",
+    "rarity": "Common"
+  },
+  {
+    "id": "squirrel_shortblade_blitz",
+    "animal": "Squirrel",
+    "weaponType": "Short Blade",
+    "displayName": "The Blitz",
+    "description": "Everywhere at once",
+    "rarity": "Common"
+  },
+  {
+    "id": "squirrel_shortblade_acrobat",
+    "animal": "Squirrel",
+    "weaponType": "Short Blade",
+    "displayName": "The Acrobat",
+    "description": "Flawless flipper",
+    "rarity": "Rare"
+  }
+]

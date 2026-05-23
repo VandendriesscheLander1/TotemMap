@@ -17,8 +17,6 @@ An interactive map tool for tracking Soulframe totem drop locations. Drop in-gam
 
 ### 1. Required files
 
-These files are not in the repo and must be provided:
-
 | File | Description |
 |---|---|
 | `Images/Map/stitched_final.jpg` | The stitched world map image |
