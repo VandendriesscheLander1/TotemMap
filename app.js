@@ -88,6 +88,7 @@ async function init() {
     const res = await fetch('temp.lua');
     const text = await res.text();
     catalog = parseCatalog(text);
+    buildOCRIndex();
   } catch (e) {
     console.error('catalog failed', e);
   }
@@ -396,6 +397,128 @@ async function makeThumb(file) {
   } catch { return ''; }
 }
 
+// ---------- OCR: bottom-strip name detection + fuzzy match ----------
+// Thumbnails show the in-game totem card with the name printed on the bottom
+// strip ("THE REBOUND / Weapon Totem"). We OCR that strip, fuzzy-match against
+// the catalog, and surface a one-tap confirm — saving two clicks per shot.
+const OCR_STRIP_RATIO = 0.28;
+const OCR_CONFIDENT_SCORE = 0.32;
+let _ocrWorkerPromise = null;
+let _fusePromise = null;
+let _fuse = null;
+let _flatTotems = [];
+
+function buildOCRIndex() {
+  _flatTotems = [];
+  for (const a of Object.keys(catalog)) for (const t of catalog[a]) {
+    const stripped = (t.displayName || '').replace(/^the\s+/i, '').trim();
+    _flatTotems.push({ animal: a, totem: t, name: t.displayName, alias: stripped });
+  }
+}
+
+function loadFuse() {
+  if (_fuse) return Promise.resolve(_fuse);
+  if (_fusePromise) return _fusePromise;
+  _fusePromise = new Promise((resolve, reject) => {
+    const done = () => {
+      _fuse = new Fuse(_flatTotems, {
+        keys: ['name', 'alias'], threshold: 0.5, includeScore: true, ignoreLocation: true,
+      });
+      resolve(_fuse);
+    };
+    if (window.Fuse) return done();
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js';
+    s.onload = done; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+  return _fusePromise;
+}
+
+function getOCRWorker() {
+  if (_ocrWorkerPromise) return _ocrWorkerPromise;
+  _ocrWorkerPromise = (async () => {
+    if (!window.Tesseract) {
+      await new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+        s.onload = res; s.onerror = rej;
+        document.head.appendChild(s);
+      });
+    }
+    const w = await Tesseract.createWorker('eng');
+    await w.setParameters({
+      tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz '-",
+      tessedit_pageseg_mode: '6',
+    });
+    return w;
+  })();
+  return _ocrWorkerPromise;
+}
+
+async function cropBottomStrip(srcUrl) {
+  const img = await new Promise((res, rej) => {
+    const i = new Image();
+    i.onload = () => res(i); i.onerror = rej;
+    i.src = srcUrl;
+  });
+  const cropH = Math.max(40, Math.round(img.height * OCR_STRIP_RATIO));
+  const scale = cropH < 120 ? 2 : 1;
+  const c = document.createElement('canvas');
+  c.width = img.width * scale;
+  c.height = cropH * scale;
+  const cx = c.getContext('2d');
+  cx.imageSmoothingEnabled = true;
+  cx.imageSmoothingQuality = 'high';
+  cx.drawImage(img, 0, img.height - cropH, img.width, cropH, 0, 0, c.width, c.height);
+  // Threshold: bright label text on dark stone.
+  const imgd = cx.getImageData(0, 0, c.width, c.height);
+  const d = imgd.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+    const v = lum > 130 ? 255 : 0;
+    d[i] = d[i + 1] = d[i + 2] = v;
+  }
+  cx.putImageData(imgd, 0, 0);
+  return c;
+}
+
+function matchTotemName(rawText) {
+  if (!_fuse || !rawText) return null;
+  const lines = rawText.split(/\n+/).map(s => s.trim()).filter(Boolean);
+  const candidates = lines.filter(l => !/weapon\s*totem/i.test(l) && l.length >= 3);
+  const pick = candidates.sort((a, b) => b.length - a.length)[0] || lines[0] || '';
+  const query = pick.replace(/[^A-Za-z\s'-]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (query.length < 3) return null;
+  const stripped = query.replace(/^the\s+/i, '').trim();
+  const r = _fuse.search(stripped)[0];
+  if (!r) return null;
+  return { ...r.item, score: r.score, query };
+}
+
+function startOCRFor(item) {
+  if (!item.thumb) return;
+  item.ocrPromise = (async () => {
+    try {
+      await loadFuse();
+      const w = await getOCRWorker();
+      const c = await cropBottomStrip(item.thumb);
+      const { data } = await w.recognize(c);
+      const guess = matchTotemName(data.text);
+      item.rawText = (data.text || '').trim();
+      item.guess = guess;
+      item.confident = !!(guess && guess.score <= OCR_CONFIDENT_SCORE);
+      if (typeof _onItemGuessReady === 'function') _onItemGuessReady(item);
+    } catch (e) {
+      console.warn('OCR failed', e);
+      item.guess = null;
+      if (typeof _onItemGuessReady === 'function') _onItemGuessReady(item);
+    }
+  })();
+}
+
+let _onItemGuessReady = null;
+
 const drop = document.getElementById('drop');
 const fileInput = document.getElementById('fileInput');
 fileInput.addEventListener('change', e => intake(e.target.files));
@@ -420,7 +543,9 @@ async function intake(fileList) {
       const m = comment && comment.match(/P:\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)/);
       if (!m) { skipped.push(f.name); return null; }
       const thumb = await makeThumb(f);
-      return { file: f.name, game: [parseFloat(m[1]), parseFloat(m[3])], thumb };
+      const item = { file: f.name, game: [parseFloat(m[1]), parseFloat(m[3])], thumb };
+      startOCRFor(item);
+      return item;
     } catch {
       skipped.push(f.name);
       return null;
@@ -451,6 +576,10 @@ const crumbs = document.getElementById('crumbs');
 const stepAnimal = document.getElementById('stepAnimal');
 const stepTotem = document.getElementById('stepTotem');
 const btnBack = document.getElementById('modalBack2');
+const ocrSuggest = document.getElementById('ocrSuggest');
+const ocrName = document.getElementById('ocrName');
+const ocrMeta = document.getElementById('ocrMeta');
+const ocrConfirm = document.getElementById('ocrConfirm');
 
 function runPickerQueue(queue) {
   return new Promise(resolve => {
@@ -468,7 +597,41 @@ function runPickerQueue(queue) {
       modalPy.textContent = py.toFixed(0);
       thumbEl.src = item.thumb || '';
       pickedAnimal = null;
+      renderSuggestion(item);
       showAnimalStep();
+    };
+
+    const renderSuggestion = (item) => {
+      if (!item.thumb) { ocrSuggest.style.display = 'none'; return; }
+      ocrSuggest.style.display = 'flex';
+      ocrSuggest.classList.toggle('confident', !!item.confident);
+      ocrSuggest.classList.toggle('nomatch', 'guess' in item && !item.guess);
+      if (item.guess) {
+        const g = item.guess;
+        ocrName.textContent = g.totem.displayName;
+        ocrMeta.textContent = `${g.animal} · ${g.totem.rarity}${item.confident ? '' : ' · low confidence — verify'}`;
+        ocrConfirm.disabled = false;
+        ocrConfirm.style.display = '';
+      } else if ('guess' in item) {
+        ocrName.textContent = 'No match — pick manually';
+        ocrMeta.textContent = item.rawText ? `read: "${item.rawText.split('\n')[0].slice(0, 40)}"` : '';
+        ocrConfirm.disabled = true;
+        ocrConfirm.style.display = 'none';
+      } else {
+        ocrName.textContent = 'Scanning…';
+        ocrMeta.textContent = '';
+        ocrConfirm.disabled = true;
+        ocrConfirm.style.display = 'none';
+      }
+    };
+
+    _onItemGuessReady = (item) => { if (queue[i] === item) renderSuggestion(item); };
+
+    const confirmGuess = () => {
+      const item = queue[i];
+      if (!item || !item.guess) return;
+      pickedAnimal = item.guess.animal;
+      save(item.guess.totem);
     };
 
     const showAnimalStep = () => {
@@ -561,6 +724,9 @@ function runPickerQueue(queue) {
       btnSkip.removeEventListener('click', next);
       btnCancel.removeEventListener('click', cancelAll);
       btnBack.removeEventListener('click', onBack);
+      ocrConfirm.removeEventListener('click', confirmGuess);
+      _onItemGuessReady = null;
+      ocrSuggest.style.display = 'none';
       resolve();
     };
 
@@ -572,6 +738,9 @@ function runPickerQueue(queue) {
         e.preventDefault();
         if (stepTotem.style.display !== 'none') showAnimalStep();
         else next();
+      } else if (e.key === 'Enter') {
+        const item = queue[i];
+        if (item && item.guess) { e.preventDefault(); confirmGuess(); }
       }
     };
 
@@ -580,6 +749,7 @@ function runPickerQueue(queue) {
     btnSkip.addEventListener('click', next);
     btnCancel.addEventListener('click', cancelAll);
     btnBack.addEventListener('click', onBack);
+    ocrConfirm.addEventListener('click', confirmGuess);
     document.addEventListener('keydown', onKey);
     modalBack.classList.add('show');
     showItem();
