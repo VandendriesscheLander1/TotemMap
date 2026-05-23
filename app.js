@@ -468,23 +468,22 @@ async function prepareForOCR(srcUrl) {
   c.width = Math.round(img.width * scale);
   c.height = Math.round(img.height * scale);
   const ctx = c.getContext('2d');
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, c.width, c.height);
+  // Only scan the top half — card tooltip always appears there and this
+  // permanently excludes the perf-stats overlay at the very bottom.
+  const cropH = Math.round(img.height * scale * 0.5);
+  c.height = cropH;
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(img, 0, 0, c.width, c.height);
-  // Color-filter: keep warm/golden pixels (totem card name color) and bright
-  // near-white pixels (subtitle/HUD text) as black ink; everything else white.
-  // This eliminates scene noise (foliage, rocks, sky) that PSM 11 would
-  // otherwise mis-read as letters.
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, c.width, c.height);
+  ctx.drawImage(img, 0, 0, img.width, img.height * 0.5, 0, 0, c.width, c.height);
+  // Luminance threshold: card text is bright (lum > 140) on a very dark card
+  // background. Colour-ratio checks broke on double-JPEG'd screenshots.
   const imgd = ctx.getImageData(0, 0, c.width, c.height);
   const d = imgd.data;
   for (let j = 0; j < d.length; j += 4) {
-    const r = d[j], g = d[j + 1], b = d[j + 2];
-    const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-    const isGolden = lum > 130 && r > 150 && r > b + 30 && g > b;
-    const isLight  = lum > 190 && r > 175 && g > 175 && b > 140;
-    d[j] = d[j + 1] = d[j + 2] = (isGolden || isLight) ? 0 : 255;
+    const lum = 0.299 * d[j] + 0.587 * d[j + 1] + 0.114 * d[j + 2];
+    d[j] = d[j + 1] = d[j + 2] = lum > 140 ? 0 : 255;
   }
   ctx.putImageData(imgd, 0, 0);
   return c;
