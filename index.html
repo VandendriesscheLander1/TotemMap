@@ -8,7 +8,7 @@
 <body>
 <div id="app">
   <div id="mapWrap">
-    <canvas id="mapCanvas"></canvas>
+    <img id="mapImg" alt="" draggable="false" />
     <svg id="overlay" xmlns="http://www.w3.org/2000/svg"></svg>
     <div id="vignette"></div>
     <div id="status">loading…</div>
@@ -91,9 +91,8 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js"></script>
-<script src="app.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script defer src="config.js"></script>
+<script defer src="app.js"></script>
 </body>
 </html>

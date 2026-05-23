@@ -20,7 +20,8 @@ html, body { height: 100%; margin: 0; font-family: ui-sans-serif, system-ui, -ap
 /* Map */
 #mapWrap { position: relative; overflow: hidden; background: #000; cursor: grab; user-select: none; }
 #mapWrap.dragging { cursor: grabbing; }
-#mapCanvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; image-rendering: auto; }
+#mapImg { position: absolute; top: 0; left: 0; transform-origin: 0 0; image-rendering: auto; user-select: none; -webkit-user-drag: none; will-change: transform; }
+#overlay { will-change: transform; }
 #overlay { position: absolute; top: 0; left: 0; transform-origin: 0 0; pointer-events: none; }
 #vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%); }
 #hud { position: absolute; bottom: 10px; left: 12px; background: rgba(14,17,22,0.85); padding: 5px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 11px; font-family: ui-monospace, monospace; color: var(--muted); pointer-events: none; }

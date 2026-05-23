@@ -53,8 +53,7 @@ const DOT_IMG = 14;
 const DOT_TEXT = 11;
 
 const mapWrap = document.getElementById('mapWrap');
-const canvas = document.getElementById('mapCanvas');
-const ctx = canvas.getContext('2d');
+const mapEl = document.getElementById('mapImg');
 const overlay = document.getElementById('overlay');
 const hud = document.getElementById('hud');
 const statusEl = document.getElementById('status');
@@ -93,8 +92,8 @@ async function init() {
     console.error('catalog failed', e);
   }
   renderFilters();
-  loadMapFromUrl('Images/Map/stitched_final.png').catch(() => {
-    setStatus('Missing stitched_final.png — drop the map below', true);
+  loadMapFromUrl('Images/Map/stitched_final.jpg').catch(() => {
+    setStatus('Missing stitched_final.jpg — drop the map below', true);
   });
   // cloud
   if (CLOUD_ENABLED) {
@@ -175,22 +174,22 @@ function pickCalibrationFile() {
 
 function loadMapFromUrl(url) {
   return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      mapImg = img;
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      overlay.setAttribute('width', img.naturalWidth);
-      overlay.setAttribute('height', img.naturalHeight);
-      overlay.setAttribute('viewBox', `0 0 ${img.naturalWidth} ${img.naturalHeight}`);
-      ctx.drawImage(img, 0, 0);
+    const onReady = () => {
+      mapImg = mapEl;
+      const w = mapEl.naturalWidth, h = mapEl.naturalHeight;
+      mapEl.style.width = w + 'px';
+      mapEl.style.height = h + 'px';
+      overlay.setAttribute('width', w);
+      overlay.setAttribute('height', h);
+      overlay.setAttribute('viewBox', `0 0 ${w} ${h}`);
       fitView();
       redrawOverlay();
       renderList();
       resolve();
     };
-    img.onerror = reject;
-    img.src = url;
+    mapEl.addEventListener('load', onReady, { once: true });
+    mapEl.addEventListener('error', reject, { once: true });
+    mapEl.src = url;
   });
 }
 
@@ -225,87 +224,132 @@ function parseCatalog(luaText) {
 }
 
 function fitView() {
+  if (!mapEl.naturalWidth) return;
   const wrap = mapWrap.getBoundingClientRect();
-  const s = Math.min(wrap.width / canvas.width, wrap.height / canvas.height) * 0.95;
+  const w = mapEl.naturalWidth, h = mapEl.naturalHeight;
+  const s = Math.min(wrap.width / w, wrap.height / h) * 0.95;
   view.scale = s;
-  view.x = (wrap.width - canvas.width * s) / 2;
-  view.y = (wrap.height - canvas.height * s) / 2;
+  view.x = (wrap.width - w * s) / 2;
+  view.y = (wrap.height - h * s) / 2;
   applyView();
 }
 
 let _lastAppliedScale = null;
+let _scaleEls = null; // cached node list of counter-scaled overlay children
 function applyView() {
   const t = `translate(${view.x}px, ${view.y}px) scale(${view.scale})`;
-  canvas.style.transform = t;
+  mapEl.style.transform = t;
   overlay.style.transform = t;
-  // Counter-scale only depends on view.scale, so skip the per-element loop
-  // during pure pans (huge perf win when many markers are on the map).
   if (view.scale === _lastAppliedScale) return;
   _lastAppliedScale = view.scale;
   const inv = Math.min(1 / view.scale, MAX_INV_SCALE);
-  overlay.querySelectorAll('[data-scale]').forEach(el => {
-    const base = parseFloat(el.dataset.scale);
-    if (el.tagName === 'circle') el.setAttribute('r', base * inv);
-    else if (el.tagName === 'text') {
+  if (!_scaleEls) _scaleEls = overlay.querySelectorAll('[data-scale]');
+  for (let i = 0; i < _scaleEls.length; i++) {
+    const el = _scaleEls[i];
+    const base = +el.dataset.scale;
+    const tag = el.tagName;
+    if (tag === 'circle') el.setAttribute('r', base * inv);
+    else if (tag === 'text') {
       el.setAttribute('font-size', base * inv);
       el.setAttribute('stroke-width', 2 * inv);
-    } else if (el.tagName === 'image') {
+    } else if (tag === 'image') {
       const size = base * inv;
+      const cx = +el.dataset.cx, cy = +el.dataset.cy;
       el.setAttribute('width', size);
       el.setAttribute('height', size);
-      const cx = parseFloat(el.dataset.cx), cy = parseFloat(el.dataset.cy);
       el.setAttribute('x', cx - size / 2);
       el.setAttribute('y', cy - size / 2);
     }
-  });
+  }
+}
+let _rafView = 0;
+function scheduleApplyView() {
+  if (_rafView) return;
+  _rafView = requestAnimationFrame(() => { _rafView = 0; applyView(); });
 }
 
 let dragging = false, dragStart = null;
+let _wrapRect = null;
+function refreshWrapRect() { _wrapRect = mapWrap.getBoundingClientRect(); }
+window.addEventListener('resize', refreshWrapRect);
+window.addEventListener('scroll', refreshWrapRect, { passive: true });
+refreshWrapRect();
+
+let _pendingMouse = null, _rafMouse = 0;
+function flushMouse() {
+  _rafMouse = 0;
+  const e = _pendingMouse; if (!e) return;
+  if (!_wrapRect) refreshWrapRect();
+  if (dragging) {
+    view.x = dragStart.vx + (e.cx - dragStart.x);
+    view.y = dragStart.vy + (e.cy - dragStart.y);
+    applyView();
+  }
+  const px = (e.cx - _wrapRect.left - view.x) / view.scale;
+  const py = (e.cy - _wrapRect.top  - view.y) / view.scale;
+  hud.textContent = `px ${px.toFixed(0)}, ${py.toFixed(0)}  ·  zoom ${view.scale.toFixed(3)}`;
+}
 mapWrap.addEventListener('mousedown', e => {
   dragging = true; mapWrap.classList.add('dragging');
   dragStart = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y };
 });
 window.addEventListener('mousemove', e => {
   if (!mapImg) return;
-  if (dragging) {
-    view.x = dragStart.vx + (e.clientX - dragStart.x);
-    view.y = dragStart.vy + (e.clientY - dragStart.y);
-    applyView();
-  }
-  const [px, py] = clientToPixel(e.clientX, e.clientY);
-  hud.textContent = `px ${px.toFixed(0)}, ${py.toFixed(0)}  ·  zoom ${view.scale.toFixed(3)}`;
+  _pendingMouse = { cx: e.clientX, cy: e.clientY };
+  if (!_rafMouse) _rafMouse = requestAnimationFrame(flushMouse);
 });
 window.addEventListener('mouseup', () => { dragging = false; mapWrap.classList.remove('dragging'); });
-mapWrap.addEventListener('wheel', e => {
-  e.preventDefault();
-  const rect = mapWrap.getBoundingClientRect();
-  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-  const factor = Math.exp(-e.deltaY * 0.0015);
+
+let _wheelAccum = 0, _wheelEv = null, _rafWheel = 0;
+function flushWheel() {
+  _rafWheel = 0;
+  if (!_wheelEv) return;
+  if (!_wrapRect) refreshWrapRect();
+  const mx = _wheelEv.cx - _wrapRect.left, my = _wheelEv.cy - _wrapRect.top;
+  const factor = Math.exp(-_wheelAccum * 0.0015);
   const ns = Math.max(0.02, Math.min(8, view.scale * factor));
   view.x = mx - (mx - view.x) * (ns / view.scale);
   view.y = my - (my - view.y) * (ns / view.scale);
   view.scale = ns;
+  _wheelAccum = 0;
+  _wheelEv = null;
   applyView();
+}
+mapWrap.addEventListener('wheel', e => {
+  e.preventDefault();
+  _wheelAccum += e.deltaY;
+  _wheelEv = { cx: e.clientX, cy: e.clientY };
+  if (!_rafWheel) _rafWheel = requestAnimationFrame(flushWheel);
 }, { passive: false });
 
 function clientToPixel(cx, cy) {
-  const rect = mapWrap.getBoundingClientRect();
-  return [(cx - rect.left - view.x) / view.scale, (cy - rect.top - view.y) / view.scale];
+  if (!_wrapRect) refreshWrapRect();
+  return [(cx - _wrapRect.left - view.x) / view.scale, (cy - _wrapRect.top - view.y) / view.scale];
 }
 
 function applyT(T, gx, gz) {
   return [T.a * gx + T.b * gz + T.tx, T.c * gx + T.d * gz + T.ty];
 }
 
-async function readJpegComment(file) {
-  try {
-    const meta = await exifr.parse(file, { userComment: true, ifd0: true, xmp: false });
-    if (meta) {
-      const cand = meta.UserComment || meta.userComment || meta.ImageDescription || meta.Comment;
-      if (cand && /P:/.test(typeof cand === 'string' ? cand : '')) return cand;
-    }
-  } catch {}
-  const buf = new Uint8Array(await file.arrayBuffer());
+let _exifrPromise = null;
+function loadExifr() {
+  if (_exifrPromise) return _exifrPromise;
+  _exifrPromise = new Promise((resolve, reject) => {
+    if (window.exifr) return resolve(window.exifr);
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js';
+    s.onload = () => resolve(window.exifr);
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+  return _exifrPromise;
+}
+
+// Scan only the JPEG header (first ~256KB) for the embedded COM marker — avoids
+// reading the entire multi-MB file when we just need the coords comment.
+async function readJpegCommentFromHeader(file) {
+  const slice = file.slice(0, Math.min(file.size, 262144));
+  const buf = new Uint8Array(await slice.arrayBuffer());
   if (buf[0] !== 0xFF || buf[1] !== 0xD8) throw new Error('not a JPEG');
   let i = 2;
   while (i < buf.length - 4) {
@@ -322,6 +366,36 @@ async function readJpegComment(file) {
   return '';
 }
 
+async function readJpegComment(file) {
+  // Fast path: scan just the header for the COM marker.
+  try {
+    const c = await readJpegCommentFromHeader(file);
+    if (c && /P:/.test(c)) return c;
+  } catch {}
+  // Fallback: full exifr parse (also slow path for files where the comment is in EXIF).
+  try {
+    const exifr = await loadExifr();
+    const meta = await exifr.parse(file, { userComment: true, ifd0: true, xmp: false });
+    if (meta) {
+      const cand = meta.UserComment || meta.userComment || meta.ImageDescription || meta.Comment;
+      if (cand && /P:/.test(typeof cand === 'string' ? cand : '')) return cand;
+    }
+  } catch {}
+  return '';
+}
+
+async function makeThumb(file) {
+  try {
+    const bmp = await createImageBitmap(file, { resizeWidth: 1600, resizeQuality: 'medium' });
+    const c = document.createElement('canvas');
+    c.width = bmp.width; c.height = bmp.height;
+    c.getContext('2d').drawImage(bmp, 0, 0);
+    bmp.close?.();
+    const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.7));
+    return blob ? URL.createObjectURL(blob) : '';
+  } catch { return ''; }
+}
+
 const drop = document.getElementById('drop');
 const fileInput = document.getElementById('fileInput');
 fileInput.addEventListener('change', e => intake(e.target.files));
@@ -335,29 +409,29 @@ async function intake(fileList) {
   if (!transform) { setStatus('Calibration missing — load calibration.json first', true); return; }
   const files = [...fileList].filter(f => /\.jpe?g$/i.test(f.name) || f.type === 'image/jpeg');
   if (!files.length) return;
-  const queue = [];
+  setStatus(`Reading ${files.length} file(s)…`, false);
   const skipped = [];
-  for (const f of files) {
+  // Process all files in parallel — header read + thumb decode are both async,
+  // so this can take a queue of 20 screenshots from ~20× single-file time down
+  // to ~1× (decode is the bottleneck and the browser pipelines it).
+  const results = await Promise.all(files.map(async f => {
     try {
       const comment = await readJpegComment(f);
       const m = comment && comment.match(/P:\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)/);
-      if (!m) { skipped.push(f.name); continue; }
-      let thumb;
-      try {
-        const bmp = await createImageBitmap(f, { resizeWidth: 1600, resizeQuality: 'high' });
-        const c = document.createElement('canvas');
-        c.width = bmp.width; c.height = bmp.height;
-        c.getContext('2d').drawImage(bmp, 0, 0);
-        thumb = c.toDataURL('image/jpeg', 0.7);
-        bmp.close?.();
-      } catch { thumb = ''; }
-      queue.push({ file: f.name, game: [parseFloat(m[1]), parseFloat(m[3])], thumb });
+      if (!m) { skipped.push(f.name); return null; }
+      const thumb = await makeThumb(f);
+      return { file: f.name, game: [parseFloat(m[1]), parseFloat(m[3])], thumb };
     } catch {
       skipped.push(f.name);
+      return null;
     }
-  }
+  }));
+  const queue = results.filter(Boolean);
   fileInput.value = '';
+  setStatus('');
   if (queue.length) await runPickerQueue(queue);
+  // Release blob URLs we created for thumbs.
+  for (const q of queue) if (q.thumb && q.thumb.startsWith('blob:')) URL.revokeObjectURL(q.thumb);
   if (skipped.length) {
     setStatus(`Skipped ${skipped.length} file(s) without coords`, true);
     setTimeout(() => setStatus(''), 3500);
@@ -552,7 +626,11 @@ async function deleteLocation(id) {
   }
 }
 
-searchEl.addEventListener('input', () => { searchTerm = searchEl.value.toLowerCase(); renderList(); });
+let _searchTimer = 0;
+searchEl.addEventListener('input', () => {
+  clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(() => { searchTerm = searchEl.value.toLowerCase(); renderList(); }, 120);
+});
 
 function locLabel(l) { return l.displayName || l.title || l.file || 'Unnamed'; }
 
@@ -637,7 +715,8 @@ function redrawOverlay(enterId) {
     }
   }
   overlay.innerHTML = svg;
-  _lastAppliedScale = null; // new elements need counter-scaling applied
+  _lastAppliedScale = null;
+  _scaleEls = null;
   applyView();
   if (enterId) {
     requestAnimationFrame(() => {
@@ -816,4 +895,4 @@ document.getElementById('filterLabels')?.addEventListener('change', e => {
   redrawOverlay();
 });
 
-window.addEventListener('resize', applyView);
+window.addEventListener('resize', () => { refreshWrapRect(); applyView(); });
