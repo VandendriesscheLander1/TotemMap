@@ -89,7 +89,6 @@ async function init() {
     const res = await fetch('temp.lua');
     const text = await res.text();
     catalog = parseCatalog(text);
-    buildOCRIndex();
   } catch (e) {
     console.error('catalog failed', e);
   }
@@ -328,114 +327,6 @@ drop.addEventListener('drop', e => intake(e.dataTransfer.files));
 ;['dragenter','dragover'].forEach(ev => mapWrap.addEventListener(ev, e => { e.preventDefault(); }));
 mapWrap.addEventListener('drop', e => { e.preventDefault(); intake(e.dataTransfer.files); });
 
-// ---------- OCR: bottom-strip name detection + fuzzy match ----------
-// The dropped JPEGs are assumed to be cropped totem cards. We OCR the bottom
-// strip (where "THE REBOUND / Weapon Totem" sits), fuzzy-match against the
-// catalog, and let the user one-tap confirm. Skipping the manual pick saves
-// two clicks per screenshot when the guess is right.
-const OCR_STRIP_RATIO = 0.28;   // bottom slice of the cropped card to scan
-const OCR_CONFIDENT_SCORE = 0.32; // Fuse score below this auto-confirms via Enter
-let _ocrWorkerPromise = null;
-let _fuse = null;
-let _flatTotems = [];
-
-function buildOCRIndex() {
-  _flatTotems = [];
-  for (const a of Object.keys(catalog)) for (const t of catalog[a]) {
-    const stripped = (t.displayName || '').replace(/^the\s+/i, '').trim();
-    _flatTotems.push({ animal: a, totem: t, name: t.displayName, alias: stripped });
-  }
-  if (window.Fuse) {
-    _fuse = new Fuse(_flatTotems, {
-      keys: ['name', 'alias'],
-      threshold: 0.5,
-      includeScore: true,
-      ignoreLocation: true,
-    });
-  }
-}
-
-function getOCRWorker() {
-  if (_ocrWorkerPromise) return _ocrWorkerPromise;
-  _ocrWorkerPromise = (async () => {
-    if (!window.Tesseract) {
-      await new Promise((res, rej) => {
-        const s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
-        s.onload = res; s.onerror = rej;
-        document.head.appendChild(s);
-      });
-    }
-    const w = await Tesseract.createWorker('eng');
-    await w.setParameters({
-      tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz '-",
-      tessedit_pageseg_mode: '6', // assume a single uniform block of text
-    });
-    return w;
-  })();
-  return _ocrWorkerPromise;
-}
-
-async function cropBottomStrip(dataUrl) {
-  const img = await new Promise((res, rej) => {
-    const i = new Image();
-    i.onload = () => res(i); i.onerror = rej;
-    i.src = dataUrl;
-  });
-  const cropH = Math.max(40, Math.round(img.height * OCR_STRIP_RATIO));
-  // Upscale a bit — Tesseract prefers ~30px x-height. Cap at 2x to keep it cheap.
-  const scale = cropH < 120 ? 2 : 1;
-  const c = document.createElement('canvas');
-  c.width = img.width * scale;
-  c.height = cropH * scale;
-  const cx = c.getContext('2d');
-  cx.imageSmoothingEnabled = true;
-  cx.imageSmoothingQuality = 'high';
-  cx.drawImage(img, 0, img.height - cropH, img.width, cropH, 0, 0, c.width, c.height);
-  // Light contrast boost: the in-game label is bright text on dark stone.
-  const imgd = cx.getImageData(0, 0, c.width, c.height);
-  const d = imgd.data;
-  for (let i = 0; i < d.length; i += 4) {
-    const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-    const v = lum > 130 ? 255 : 0;
-    d[i] = d[i + 1] = d[i + 2] = v;
-  }
-  cx.putImageData(imgd, 0, 0);
-  return c;
-}
-
-function matchTotemName(rawText) {
-  if (!_fuse || !rawText) return null;
-  const lines = rawText.split(/\n+/).map(s => s.trim()).filter(Boolean);
-  // Drop the "Weapon Totem" subtitle line; pick the longest remaining line.
-  const candidates = lines.filter(l => !/weapon\s*totem/i.test(l) && l.length >= 3);
-  const pick = candidates.sort((a, b) => b.length - a.length)[0] || lines[0] || '';
-  const query = pick.replace(/[^A-Za-z\s'-]/g, ' ').replace(/\s+/g, ' ').trim();
-  if (query.length < 3) return null;
-  const stripped = query.replace(/^the\s+/i, '').trim();
-  const r = _fuse.search(stripped)[0];
-  if (!r) return null;
-  return { ...r.item, score: r.score, query };
-}
-
-function startOCRFor(item) {
-  if (!item.thumb || !_fuse) return;
-  item.ocrPromise = (async () => {
-    try {
-      const w = await getOCRWorker();
-      const c = await cropBottomStrip(item.thumb);
-      const { data } = await w.recognize(c);
-      const guess = matchTotemName(data.text);
-      item.guess = guess;
-      item.confident = !!(guess && guess.score <= OCR_CONFIDENT_SCORE);
-      if (typeof _onItemGuessReady === 'function') _onItemGuessReady(item);
-    } catch (e) { console.warn('OCR failed', e); }
-  })();
-}
-
-// Picker subscribes by setting this so it can repaint when a guess lands late.
-let _onItemGuessReady = null;
-
 async function intake(fileList) {
   if (!transform) { setStatus('Calibration missing — load calibration.json first', true); return; }
   const files = [...fileList].filter(f => /\.jpe?g$/i.test(f.name) || f.type === 'image/jpeg');
@@ -456,9 +347,7 @@ async function intake(fileList) {
         thumb = c.toDataURL('image/jpeg', 0.7);
         bmp.close?.();
       } catch { thumb = ''; }
-      const item = { file: f.name, game: [parseFloat(m[1]), parseFloat(m[3])], thumb };
-      startOCRFor(item);
-      queue.push(item);
+      queue.push({ file: f.name, game: [parseFloat(m[1]), parseFloat(m[3])], thumb });
     } catch {
       skipped.push(f.name);
     }
@@ -484,10 +373,6 @@ const crumbs = document.getElementById('crumbs');
 const stepAnimal = document.getElementById('stepAnimal');
 const stepTotem = document.getElementById('stepTotem');
 const btnBack = document.getElementById('modalBack2');
-const ocrSuggest = document.getElementById('ocrSuggest');
-const ocrName = document.getElementById('ocrName');
-const ocrMeta = document.getElementById('ocrMeta');
-const ocrConfirm = document.getElementById('ocrConfirm');
 
 function runPickerQueue(queue) {
   return new Promise(resolve => {
@@ -505,42 +390,7 @@ function runPickerQueue(queue) {
       modalPy.textContent = py.toFixed(0);
       thumbEl.src = item.thumb || '';
       pickedAnimal = null;
-      renderSuggestion(item);
       showAnimalStep();
-    };
-
-    const renderSuggestion = (item) => {
-      // Show "scanning…" while OCR runs, then the guess or "no match".
-      const hasIndex = !!_fuse;
-      if (!hasIndex || !item.thumb) { ocrSuggest.style.display = 'none'; return; }
-      ocrSuggest.style.display = 'flex';
-      ocrSuggest.classList.toggle('confident', !!item.confident);
-      if (item.guess) {
-        const g = item.guess;
-        ocrName.textContent = g.totem.displayName;
-        ocrMeta.textContent = `${g.animal} · ${g.totem.rarity}${item.confident ? '' : ' · low confidence'}`;
-        ocrConfirm.disabled = false;
-        ocrConfirm.style.display = '';
-      } else if (item.ocrPromise && !('guess' in item)) {
-        ocrName.textContent = 'scanning…';
-        ocrMeta.textContent = '';
-        ocrConfirm.disabled = true;
-        ocrConfirm.style.display = 'none';
-      } else {
-        ocrName.textContent = 'no match — pick manually';
-        ocrMeta.textContent = '';
-        ocrConfirm.disabled = true;
-        ocrConfirm.style.display = 'none';
-      }
-    };
-
-    _onItemGuessReady = (item) => { if (queue[i] === item) renderSuggestion(item); };
-
-    const confirmGuess = () => {
-      const item = queue[i];
-      if (!item || !item.guess) return;
-      pickedAnimal = item.guess.animal;
-      save(item.guess.totem);
     };
 
     const showAnimalStep = () => {
@@ -633,9 +483,6 @@ function runPickerQueue(queue) {
       btnSkip.removeEventListener('click', next);
       btnCancel.removeEventListener('click', cancelAll);
       btnBack.removeEventListener('click', onBack);
-      ocrConfirm.removeEventListener('click', confirmGuess);
-      _onItemGuessReady = null;
-      ocrSuggest.style.display = 'none';
       resolve();
     };
 
@@ -647,9 +494,6 @@ function runPickerQueue(queue) {
         e.preventDefault();
         if (stepTotem.style.display !== 'none') showAnimalStep();
         else next();
-      } else if (e.key === 'Enter') {
-        const item = queue[i];
-        if (item && item.guess) { e.preventDefault(); confirmGuess(); }
       }
     };
 
@@ -658,7 +502,6 @@ function runPickerQueue(queue) {
     btnSkip.addEventListener('click', next);
     btnCancel.addEventListener('click', cancelAll);
     btnBack.addEventListener('click', onBack);
-    ocrConfirm.addEventListener('click', confirmGuess);
     document.addEventListener('keydown', onKey);
     modalBack.classList.add('show');
     showItem();
