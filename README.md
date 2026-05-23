@@ -78,6 +78,30 @@ python -m http.server
 | `Esc` | Skip current screenshot |
 | `Shift` + `Esc` | Cancel remaining screenshots |
 
+## Watcher (Linux / from source)
+
+The **Watcher** is an optional companion app that monitors your Soulframe screenshot folder and auto-uploads new totem sightings — no manual drag-and-drop. Windows users can grab a prebuilt zip from [the latest release](https://github.com/VandendriesscheLander1/TotemMap/releases/latest); Linux users (or anyone who'd rather run from source) can do this:
+
+```bash
+git clone https://github.com/VandendriesscheLander1/TotemMap.git
+cd TotemMap/ocr
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+python watcher.py
+```
+
+On first launch a folder picker asks where Soulframe saves your screenshots; the choice is written to `config.json` next to the script.
+
+**Linux prerequisites:**
+
+- `python3-tk` for the first-run folder picker (e.g. `sudo apt install python3-tk` on Debian/Ubuntu, `sudo dnf install python3-tkinter` on Fedora).
+- EasyOCR pulls in PyTorch. For a CPU-only install (much smaller, no CUDA needed), install torch from its CPU index *before* `pip install -r requirements.txt`:
+  ```bash
+  pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+  ```
+
+To build a standalone Linux binary, run PyInstaller on a Linux machine with the same flags used in [ocr/build.ps1](ocr/build.ps1) (replace the `;` data separators with `:`, since that's PyInstaller's Linux convention).
+
 ## Project structure
 
 ```
