@@ -233,11 +233,15 @@ function fitView() {
   applyView();
 }
 
+let _lastAppliedScale = null;
 function applyView() {
   const t = `translate(${view.x}px, ${view.y}px) scale(${view.scale})`;
   canvas.style.transform = t;
   overlay.style.transform = t;
-  // Cap the counter-scale so dots/labels don't balloon when zoomed far out.
+  // Counter-scale only depends on view.scale, so skip the per-element loop
+  // during pure pans (huge perf win when many markers are on the map).
+  if (view.scale === _lastAppliedScale) return;
+  _lastAppliedScale = view.scale;
   const inv = Math.min(1 / view.scale, MAX_INV_SCALE);
   overlay.querySelectorAll('[data-scale]').forEach(el => {
     const base = parseFloat(el.dataset.scale);
@@ -633,6 +637,7 @@ function redrawOverlay(enterId) {
     }
   }
   overlay.innerHTML = svg;
+  _lastAppliedScale = null; // new elements need counter-scaling applied
   applyView();
   if (enterId) {
     requestAnimationFrame(() => {
