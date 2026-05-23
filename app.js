@@ -401,7 +401,6 @@ async function makeThumb(file) {
 // Thumbnails show the in-game totem card with the name printed on the bottom
 // strip ("THE REBOUND / Weapon Totem"). We OCR that strip, fuzzy-match against
 // the catalog, and surface a one-tap confirm — saving two clicks per shot.
-const OCR_STRIP_RATIO = 0.28;
 const OCR_CONFIDENT_SCORE = 0.32;
 let _ocrWorkerPromise = null;
 let _fusePromise = null;
@@ -449,51 +448,49 @@ function getOCRWorker() {
     const w = await Tesseract.createWorker('eng');
     await w.setParameters({
       tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz '-",
-      tessedit_pageseg_mode: '6',
+      tessedit_pageseg_mode: '11', // sparse text — find text wherever it appears in the image
     });
     return w;
   })();
   return _ocrWorkerPromise;
 }
 
-async function cropBottomStrip(srcUrl) {
+async function prepareForOCR(srcUrl) {
   const img = await new Promise((res, rej) => {
     const i = new Image();
     i.onload = () => res(i); i.onerror = rej;
     i.src = srcUrl;
   });
-  const cropH = Math.max(40, Math.round(img.height * OCR_STRIP_RATIO));
-  const scale = cropH < 120 ? 2 : 1;
+  // Downscale to 900px wide — fast enough for Tesseract, big enough to read.
+  const targetW = 900;
+  const scale = Math.min(1, targetW / img.width);
   const c = document.createElement('canvas');
-  c.width = img.width * scale;
-  c.height = cropH * scale;
-  const cx = c.getContext('2d');
-  cx.imageSmoothingEnabled = true;
-  cx.imageSmoothingQuality = 'high';
-  cx.drawImage(img, 0, img.height - cropH, img.width, cropH, 0, 0, c.width, c.height);
-  // Threshold: bright label text on dark stone.
-  const imgd = cx.getImageData(0, 0, c.width, c.height);
-  const d = imgd.data;
-  for (let i = 0; i < d.length; i += 4) {
-    const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-    const v = lum > 130 ? 255 : 0;
-    d[i] = d[i + 1] = d[i + 2] = v;
-  }
-  cx.putImageData(imgd, 0, 0);
+  c.width = Math.round(img.width * scale);
+  c.height = Math.round(img.height * scale);
+  const ctx = c.getContext('2d');
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(img, 0, 0, c.width, c.height);
   return c;
 }
 
 function matchTotemName(rawText) {
   if (!_fuse || !rawText) return null;
   const lines = rawText.split(/\n+/).map(s => s.trim()).filter(Boolean);
-  const candidates = lines.filter(l => !/weapon\s*totem/i.test(l) && l.length >= 3);
-  const pick = candidates.sort((a, b) => b.length - a.length)[0] || lines[0] || '';
-  const query = pick.replace(/[^A-Za-z\s'-]/g, ' ').replace(/\s+/g, ' ').trim();
-  if (query.length < 3) return null;
-  const stripped = query.replace(/^the\s+/i, '').trim();
-  const r = _fuse.search(stripped)[0];
-  if (!r) return null;
-  return { ...r.item, score: r.score, query };
+  let best = null;
+  for (const line of lines) {
+    if (/weapon\s*totem/i.test(line)) continue;
+    // Strip non-alpha (digits from perf stats, punctuation, etc.)
+    const query = line.replace(/[^A-Za-z\s'-]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (query.length < 3) continue;
+    const stripped = query.replace(/^the\s+/i, '').trim();
+    if (stripped.length < 3) continue;
+    const r = _fuse.search(stripped)[0];
+    if (r && (!best || r.score < best.score)) {
+      best = { ...r.item, score: r.score, query };
+    }
+  }
+  return best || null;
 }
 
 function startOCRFor(item) {
@@ -502,7 +499,7 @@ function startOCRFor(item) {
     try {
       await loadFuse();
       const w = await getOCRWorker();
-      const c = await cropBottomStrip(item.thumb);
+      const c = await prepareForOCR(item.thumb);
       const { data } = await w.recognize(c);
       const guess = matchTotemName(data.text);
       item.rawText = (data.text || '').trim();
