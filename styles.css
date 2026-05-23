@@ -73,7 +73,7 @@ button.danger { color: var(--danger); border-color: rgba(224,108,117,0.4); }
 button.danger:hover { background: rgba(224,108,117,0.1); }
 
 /* Modal */
-#modalBack { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 100; }
+#modalBack { position: fixed; inset: 0; background: rgba(0,0,0,0.78); display: none; align-items: center; justify-content: center; z-index: 100; }
 #modalBack.show { display: flex; }
 .modal { width: min(720px, 94vw); max-height: 92vh; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 24px 64px rgba(0,0,0,0.6); padding: 22px; display: flex; flex-direction: column; min-height: 0; }
 .modal-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; gap: 12px; }
